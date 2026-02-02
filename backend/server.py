@@ -261,14 +261,18 @@ async def login(data: UserLogin):
         if not is_valid:
             logger.warning(f"Login failed: Invalid password for {data.email}")
             raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    user_doc.pop('password_hash', None)
-    if isinstance(user_doc['created_at'], str):
-        user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
-    
-    user = User(**user_doc)
-    token = create_token(user.id, user.role)
-    return {'token': token, 'user': user}
+            
+        user_doc.pop('password_hash', None)
+        if isinstance(user_doc['created_at'], str):
+            user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+        
+        user = User(**user_doc)
+        token = create_token(user.id, user.role)
+        logger.info(f"Login successful for {data.email} (Total: {time_module.time() - start_time:.2f}s)")
+        return {'token': token, 'user': user}
+    except Exception as e:
+        logger.error(f"Login error for {data.email}: {str(e)}")
+        raise e
 
 @api_router.get("/auth/me")
 async def get_me(user: User = Depends(get_current_user)):
