@@ -288,6 +288,10 @@ async def login(data: UserLogin):
 async def get_me(user: User = Depends(get_current_user)):
     return user
 
+@api_router.get("/ping")
+async def ping():
+    return {"message": "pong", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 # ============ Admin Menu Management ============
 
 @api_router.post("/admin/menu-items", dependencies=[Depends(require_admin)])
@@ -582,10 +586,20 @@ async def root():
 # Include router
 app.include_router(api_router)
 
+# Improved CORS for production
+allowed_origins = os.environ.get('CORS_ORIGINS', '*').split(',')
+if '*' not in allowed_origins:
+    # Add common deployment environments if not wildcard
+    allowed_origins.extend([
+        "https://food-system-hc9s.vercel.app",
+        "https://food-system-backend.onrender.com",
+        "http://localhost:3000"
+    ])
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )

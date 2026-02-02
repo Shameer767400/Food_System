@@ -6,9 +6,10 @@ import { toast } from 'sonner';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, ping, API } = useAuth(); // Modified: Added ping, API
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [pinging, setPinging] = useState(false); // Added: pinging state
   
   const [formData, setFormData] = useState({
     email: '',
@@ -16,6 +17,21 @@ export default function LoginPage() {
     name: '',
     hostel_id: ''
   });
+
+  // Added: handlePing function
+  const handlePing = async () => {
+    setPinging(true);
+    try {
+      await ping();
+      toast.success('API connection successful!');
+    } catch (error) {
+      console.error('Ping error:', error);
+      const message = error.response?.data?.detail || error.message || 'API connection failed';
+      toast.error(message);
+    } finally {
+      setPinging(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -163,6 +179,16 @@ export default function LoginPage() {
             >
               {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </button>
+
+            {/* Added: Test Connection button */}
+            <button
+              type="button"
+              onClick={handlePing}
+              disabled={pinging}
+              className="w-full bg-white text-slate-900 border border-slate-200 py-3 rounded-xl font-semibold hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+            >
+              {pinging ? 'Testing...' : 'Test Connection'}
+            </button>
           </form>
 
           <div className="mt-8 text-center">
@@ -190,6 +216,12 @@ export default function LoginPage() {
                 <span className="text-xs font-bold text-slate-600">Student</span>
                 <span className="text-xs text-slate-500">student@hostel.com / student123</span>
               </div>
+            </div>
+          {/* API URL Info */}
+          <div className="mt-8 pt-6 border-t border-slate-100">
+            <div className="bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100 flex flex-col items-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-1">Target API URL</p>
+              <code className="text-[10px] text-slate-600 font-mono break-all text-center">{API}</code>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const AuthContext = createContext(null);
 
@@ -60,12 +61,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    toast.info(`Attempting login to: ${API}`, { duration: 3000 });
     const response = await api.post(`${API}/auth/login`, { email, password });
     const { token: newToken, user: userData } = response.data;
     localStorage.setItem('token', newToken);
     setToken(newToken);
     setUser(userData);
     return userData;
+  };
+
+  const ping = async () => {
+    try {
+      const start = Date.now();
+      const response = await api.get(`${API}/ping`);
+      const duration = Date.now() - start;
+      toast.success(`Connection Active! Ping: ${duration}ms`);
+      return true;
+    } catch (error) {
+      console.error('Ping failed:', error);
+      toast.error(`Connection Failed: ${error.message}`);
+      return false;
+    }
   };
 
   const register = async (email, password, name, hostel_id) => {
@@ -95,7 +111,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, loading, refreshUser, ping, API }}>
       {children}
     </AuthContext.Provider>
   );
