@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
-import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { UtensilsCrossed, LogOut, Plus, BarChart3, Ticket, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { useAuth, API } from '../contexts/AuthContext';
 
 const COLORS = ['#F97316', '#0F172A', '#22C55E', '#3B82F6', '#A855F7', '#EC4899'];
 

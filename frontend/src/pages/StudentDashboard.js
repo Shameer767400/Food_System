@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
-import { UtensilsCrossed, Ticket, History, LogOut, Clock, CheckCircle, XCircle, User } from 'lucide-react';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { useAuth, API } from '../contexts/AuthContext';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();

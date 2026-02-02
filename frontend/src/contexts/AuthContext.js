@@ -3,11 +3,21 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-console.log('API URL:', API);
+const getBackendUrl = () => {
+  const envUrl = process.env.REACT_APP_BACKEND_URL;
+  if (envUrl && envUrl.trim() !== "") {
+    return envUrl.replace(/\/$/, '');
+  }
+  // Fallback to the known Render URL if env var is missing
+  return 'https://food-system-backend.onrender.com';
+};
+
+export const API = `${getBackendUrl()}/api`;
+console.log('Final API URL:', API);
 
 // Create axios instance with timeout
-const api = axios.create({
+export const api = axios.create({
+  baseURL: API,
   timeout: 30000, // 30 seconds
 });
 // Add interceptors or just use the instance
