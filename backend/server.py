@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timezone, time, timedelta
 import bcrypt
 import jwt
+import time as time_module
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -200,45 +201,66 @@ def check_selection_window(meal_type: str, target_date: str) -> dict:
 
 @api_router.post("/auth/register")
 async def register(data: UserRegister):
+    start_time = time_module.time()
     logger.info(f"Register attempt for: {data.email}")
-    # Check if user exists
-    existing = await db.users.find_one({'email': data.email}, {'_id': 0})
-    if existing:
-        logger.warning(f"Registration failed: Email {data.email} already exists")
-        raise HTTPException(status_code=400, detail="Email already registered")
     
-    user = User(
-        email=data.email,
-        name=data.name,
-        role='student',
-        hostel_id=data.hostel_id
-    )
-    
-    user_dict = user.model_dump()
-    logger.info(f"Hashing password for {data.email}...")
-    user_dict['password_hash'] = await run_in_threadpool(hash_password, data.password)
-    user_dict['created_at'] = user_dict['created_at'].isoformat()
-    
-    logger.info(f"Inserting user {data.email} into DB...")
-    await db.users.insert_one(user_dict)
-    
-    token = create_token(user.id, user.role)
-    logger.info(f"Registration successful for {data.email}")
-    return {'token': token, 'user': user}
+    try:
+        # Check if user exists
+        existing = await db.users.find_one({'email': data.email}, {'_id': 0}).with_options(timeout=5000)
+        logger.info(f"DB check took: {time_module.time() - start_time:.2f}s")
+        
+        if existing:
+            logger.warning(f"Registration failed: Email {data.email} already exists")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        user = User(
+            email=data.email,
+            name=data.name,
+            role='student',
+            hostel_id=data.hostel_id
+        )
+        
+        user_dict = user.model_dump()
+        hash_start = time_module.time()
+        logger.info(f"Hashing password for {data.email}...")
+        user_dict['password_hash'] = await run_in_threadpool(hash_password, data.password)
+        logger.info(f"Hashing took: {time_module.time() - hash_start:.2f}s")
+        
+        user_dict['created_at'] = user_dict['created_at'].isoformat()
+        
+        db_start = time_module.time()
+        logger.info(f"Inserting user {data.email} into DB...")
+        await db.users.insert_one(user_dict).with_options(timeout=5000)
+        logger.info(f"Insertion took: {time_module.time() - db_start:.2f}s")
+        
+        token = create_token(user.id, user.role)
+        logger.info(f"Registration successful for {data.email} (Total: {time_module.time() - start_time:.2f}s)")
+        return {'token': token, 'user': user}
+    except Exception as e:
+        logger.error(f"Registration error for {data.email}: {str(e)}")
+        raise e
 
 @api_router.post("/auth/login")
 async def login(data: UserLogin):
+    start_time = time_module.time()
     logger.info(f"Login attempt for: {data.email}")
-    user_doc = await db.users.find_one({'email': data.email}, {'_id': 0})
-    if not user_doc:
-        logger.warning(f"Login failed: User {data.email} not found")
-        raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    logger.info(f"Verifying password for {data.email}...")
-    is_valid = await run_in_threadpool(verify_password, data.password, user_doc['password_hash'])
-    if not is_valid:
-        logger.warning(f"Login failed: Invalid password for {data.email}")
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    try:
+        user_doc = await db.users.find_one({'email': data.email}, {'_id': 0}).with_options(timeout=5000)
+        logger.info(f"DB lookup took: {time_module.time() - start_time:.2f}s")
+        
+        if not user_doc:
+            logger.warning(f"Login failed: User {data.email} not found")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        verify_start = time_module.time()
+        logger.info(f"Verifying password for {data.email}...")
+        is_valid = await run_in_threadpool(verify_password, data.password, user_doc['password_hash'])
+        logger.info(f"Verification took: {time_module.time() - verify_start:.2f}s")
+        
+        if not is_valid:
+            logger.warning(f"Login failed: Invalid password for {data.email}")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
     
     user_doc.pop('password_hash', None)
     if isinstance(user_doc['created_at'], str):
