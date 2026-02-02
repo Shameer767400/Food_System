@@ -8,7 +8,7 @@ console.log('API URL:', API);
 
 // Create axios instance with timeout
 const api = axios.create({
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
 });
 // Add interceptors or just use the instance
 

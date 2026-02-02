@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, BackgroundTasks
+from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -199,9 +200,11 @@ def check_selection_window(meal_type: str, target_date: str) -> dict:
 
 @api_router.post("/auth/register")
 async def register(data: UserRegister):
+    logger.info(f"Register attempt for: {data.email}")
     # Check if user exists
     existing = await db.users.find_one({'email': data.email}, {'_id': 0})
     if existing:
+        logger.warning(f"Registration failed: Email {data.email} already exists")
         raise HTTPException(status_code=400, detail="Email already registered")
     
     user = User(
@@ -212,21 +215,29 @@ async def register(data: UserRegister):
     )
     
     user_dict = user.model_dump()
-    user_dict['password_hash'] = hash_password(data.password)
+    logger.info(f"Hashing password for {data.email}...")
+    user_dict['password_hash'] = await run_in_threadpool(hash_password, data.password)
     user_dict['created_at'] = user_dict['created_at'].isoformat()
     
+    logger.info(f"Inserting user {data.email} into DB...")
     await db.users.insert_one(user_dict)
     
     token = create_token(user.id, user.role)
+    logger.info(f"Registration successful for {data.email}")
     return {'token': token, 'user': user}
 
 @api_router.post("/auth/login")
 async def login(data: UserLogin):
+    logger.info(f"Login attempt for: {data.email}")
     user_doc = await db.users.find_one({'email': data.email}, {'_id': 0})
     if not user_doc:
+        logger.warning(f"Login failed: User {data.email} not found")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not verify_password(data.password, user_doc['password_hash']):
+    logger.info(f"Verifying password for {data.email}...")
+    is_valid = await run_in_threadpool(verify_password, data.password, user_doc['password_hash'])
+    if not is_valid:
+        logger.warning(f"Login failed: Invalid password for {data.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     user_doc.pop('password_hash', None)
