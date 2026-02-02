@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, BackgroundTasks
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, BackgroundTasks, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -29,9 +29,19 @@ JWT_ALGORITHM = 'HS256'
 
 security = HTTPBearer()
 
-# Create the main app
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"REQUEST: {request.method} {request.url.path}")
+    try:
+        response = await call_next(request)
+        logger.info(f"RESPONSE: {response.status_code} for {request.url.path}")
+        return response
+    except Exception as e:
+        logger.error(f"ERROR processing {request.url.path}: {str(e)}")
+        raise e
 
 # ============ Models ============
 
