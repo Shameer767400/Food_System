@@ -517,18 +517,19 @@ async def update_profile(data: ProfileUpdate, user: User = Depends(get_current_u
 # Root endpoint
 @app.get("/")
 async def root():
+    db_status = "Disconnected"
+    try:
+        # Ping the database
+        await client.admin.command('ping')
+        db_status = "Connected"
+    except Exception as e:
+        db_status = f"Error: {str(e)}"
+        
     return {
         "message": "Hostel Food Management System API",
+        "database": db_status,
         "version": "1.0.0",
-        "docs": "/docs",
-        "redoc": "/redoc",
-        "api_prefix": "/api",
-        "endpoints": {
-            "auth": "/api/auth/login, /api/auth/register, /api/auth/me",
-            "student": "/api/student/menus, /api/student/selections, /api/student/booking-history",
-            "admin": "/api/admin/menu-items, /api/admin/menus, /api/admin/analytics/{menu_id}",
-            "tickets": "/api/tickets"
-        }
+        "api_prefix": "/api"
     }
 
 # Include router

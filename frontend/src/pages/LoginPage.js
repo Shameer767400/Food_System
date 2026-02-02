@@ -32,7 +32,9 @@ export default function LoginPage() {
         navigate('/dashboard');
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Authentication failed');
+      console.error('Login error:', error);
+      const message = error.response?.data?.detail || error.message || 'Authentication failed';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
