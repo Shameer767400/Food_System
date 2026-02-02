@@ -4,6 +4,14 @@ import axios from 'axios';
 const AuthContext = createContext(null);
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+console.log('API URL:', API);
+
+// Create axios instance with timeout
+const api = axios.create({
+  timeout: 10000, // 10 seconds
+});
+// Add interceptors or just use the instance
+
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -28,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`, {
+      const response = await api.get(`${API}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
@@ -41,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const response = await axios.post(`${API}/auth/login`, { email, password });
+    const response = await api.post(`${API}/auth/login`, { email, password });
     const { token: newToken, user: userData } = response.data;
     localStorage.setItem('token', newToken);
     setToken(newToken);
@@ -50,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, password, name, hostel_id) => {
-    const response = await axios.post(`${API}/auth/register`, {
+    const response = await api.post(`${API}/auth/register`, {
       email,
       password,
       name,
