@@ -3,6 +3,7 @@ module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+
   theme: {
     extend: {
       colors: {
@@ -19,6 +20,7 @@ module.exports = {
           900: '#7c2d12',
         },
       },
+
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         heading: ['Manrope', 'system-ui', 'sans-serif'],
@@ -27,3 +29,4 @@ module.exports = {
   },
   plugins: [],
 }
+
