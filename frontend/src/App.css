@@ -12,15 +12,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #FAFAFA;
 }
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
-
 * {
   box-sizing: border-box;
 }
-
 /* Smooth transitions */
 button, a, input, select, textarea {
   transition: all 0.2s ease-out;
