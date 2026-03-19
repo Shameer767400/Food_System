@@ -47,6 +47,7 @@ async def seed_database():
             'hostel_id': 'H-101',
             'created_at': datetime.now(timezone.utc).isoformat()
         }
+
         await db.users.insert_one(student)
         print("✓ Student user created (student@hostel.com / student123)")
     
@@ -72,7 +73,6 @@ async def seed_database():
         {'id': 'item-d4', 'name': 'Fish Fry', 'category': 'non-veg', 'meal_type': 'dinner', 'description': 'Crispy fried fish'},
         {'id': 'item-d5', 'name': 'Salad', 'category': 'veg', 'meal_type': 'dinner', 'description': 'Fresh vegetable salad'},
     ]
-    
     for item in items:
         exists = await db.menu_items.find_one({'id': item['id']})
         if not exists:
@@ -86,6 +86,7 @@ async def seed_database():
     
     menus = [
         {
+
             'id': 'menu-today-breakfast',
             'date': today.strftime('%Y-%m-%d'),
             'meal_type': 'breakfast',
@@ -95,6 +96,7 @@ async def seed_database():
             'selection_end': (today - timedelta(days=1)).replace(hour=21, minute=30).isoformat(),
             'created_at': datetime.now(timezone.utc).isoformat()
         },
+
         {
             'id': 'menu-today-lunch',
             'date': today.strftime('%Y-%m-%d'),
@@ -132,9 +134,7 @@ async def seed_database():
         if not exists:
             await db.menus.insert_one(menu)
     print(f"✓ {len(menus)} menus created")
-    
     client.close()
     print("\n✅ Database seeded successfully!")
-
 if __name__ == '__main__':
     asyncio.run(seed_database())
